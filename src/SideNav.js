@@ -1,79 +1,57 @@
 import React from 'react'
-import {withRouter} from 'next/router'
-import NextLink from 'next/link'
+import {Router, Link as RouteLink} from '@reach/router'
 import {BorderBox, Box, Link, Flex, Relative} from '@primer/components'
 import root from './nav'
 
-export default withRouter(({router, ...rest}) => {
-  const sections = getSectionsForPath(router.pathname, node => node.meta.nav === 'side')
-  return (
-    <Relative {...rest}>
-      <BorderBox
-        id="sidenav"
-        width={['100%', '100%', 256, 256]}
-        height="100%"
-        bg="gray.0"
-        borderLeft={0}
-        borderBottom={0}
-        borderRight={1}
-        borderTop={[1, 1, 0, 0]}
-        borderColor="gray.2"
-        borderRadius={0}
-      >
-        {sections.map(node => (
-          <Section key={node.path} node={node} />
-        ))}
-      </BorderBox>
-    </Relative>
-  )
-})
-
-function getSectionsForPath(path, check) {
-  const node = root.first(node => node.path === path)
-  if (check(node)) {
-    return node.parent.children.filter(check)
-  }
-  // find the first ancestor (going "up" from this node) with *children* that
-  // pass the check()
-  const parent = node
-    .getPath()
-    .reverse()
-    .find(ancestor => ancestor.children.some(check))
-  return parent ? parent.children.filter(check) : []
-}
-
-function Section({node, ...rest}) {
-  if (node.meta.hidden === true) {
-    return null
-  }
-  const {path = '', name} = node
-  const links = node.children.filter(child => !child.meta.hidden).map(child => (
-    <PageLink key={child.path} href={child.path}>
-      {child.name}
-    </PageLink>
-  ))
-  return (
-    <BorderBox px={5} py={3} border={0} borderBottom={1} borderColor="gray.2" borderRadius={0} bg={null} {...rest}>
-      <Flex flexDirection="column" alignItems="start">
-        <SectionLink href={path}>{name}</SectionLink>
-        {links}
-      </Flex>
+export default props => (
+  <Relative {...props}>
+    <BorderBox
+      id="sidenav"
+      is="nav"
+      width={['100%', '100%', 256, 256]}
+      height="100%"
+      bg="gray.0"
+      borderLeft={0}
+      borderBottom={0}
+      borderRight={1}
+      borderTop={[1, 1, 0, 0]}
+      borderColor="gray.2"
+      borderRadius={0}
+    >
+      <Router>
+        <Section path="/design/global">
+          <SectionLink to=".">Global</SectionLink>
+          <PageLink to="accessibility">Accessibility</PageLink>
+        </Section>
+        <Section path="/design/foundation">
+          <SectionLink to=".">Foundation</SectionLink>
+          <PageLink to="color">Color</PageLink>
+        </Section>
+      </Router>
     </BorderBox>
-  )
-}
+  </Relative>
+)
 
-const SectionLink = withRouter(({href, router, ...rest}) => (
+const Section = ({children, ...rest}) => (
+  <BorderBox px={5} py={3} border={0} borderBottom={1} borderColor="gray.2" borderRadius={0} bg={null} {...rest}>
+    <Flex flexDirection="column" alignItems="start">
+      {children}
+    </Flex>
+  </BorderBox>
+)
+
+const SectionLink = props => (
   <Box my={3}>
-    <NextLink href={href}>
-      <Link href={href} color="gray.9" fontWeight={router.pathname.startsWith(href) ? 'bold' : null} {...rest} />
-    </NextLink>
+    <Link is={RouteLink} color="gray.9" getProps={isCurrentSwitch('fontWeight', 'bold', null)} {...props} />
   </Box>
-))
+)
 
-const PageLink = withRouter(({href, router, ...rest}) => (
+const PageLink = props => (
   <Box mb={3}>
-    <NextLink href={href}>
-      <Link href={href} color={router.pathname === href ? 'gray.9' : 'blue.5'} fontSize={1} {...rest} />
-    </NextLink>
+    <Link is={RouteLink} fontSize={1} getProps={isCurrentSwitch('color', 'gray.9', 'blue.5')} {...props} />
   </Box>
-))
+)
+
+function isCurrentSwitch(key, ifCurrent, otherwise) {
+  return ({isCurrent}) => ({[key]: isCurrent ? ifCurrent : otherwise})
+}
